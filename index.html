@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Валидатор текста РАН</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f5f5f7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Шапка как в референсе */
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-placeholder {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .logo-text input {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 13px;
+            width: 200px;
+        }
+
+        .badge {
+            background: #f0f0f0;
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #333;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Основной контейнер */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            width: 100%;
+        }
+
+        /* Сетка как в референсе */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* Левая панель */
+        .left-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            height: fit-content;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .menu-item:hover {
+            background: #f5f5f7;
+        }
+
+        .menu-item.active {
+            background: #f0eef7;
+            color: #764ba2;
+            font-weight: 500;
+        }
+
+        .menu-icon {
+            width: 20px;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e5e5e5;
+            margin: 16px 0;
+        }
+
+        /* Центральная панель - редактор */
+        .editor-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .editor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editor-tabs {
+            display: flex;
+            gap: 8px;
+            background: #f5f5f7;
+            padding: 4px;
+            border-radius: 30px;
+        }
+
+        .tab-btn {
+            padding: 8px 20px;
+            border: none;
+            background: none;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .tab-btn.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: #764ba2;
+            font-weight: 500;
+        }
+
+        /* Текстовая область */
+        .text-input-area {
+            margin-bottom: 20px;
+        }
+
+        .text-input-area textarea {
+            width: 100%;
+            height: 300px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s;
+            font-family: 'Inter', monospace;
+        }
+
+        .text-input-area textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+
+        /* Панель инструментов */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        /* Статистика */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Правая панель */
+        .right-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .badge {
+            background: #764ba2;
+            color: white;
+            font-size: 11px;
+        }
+
+        /* Результаты проверки */
+        .result-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .result-card:hover {
+            border-color: #764ba2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .result-word {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .risk-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: normal;
+        }
+
+        .risk-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .risk-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .replacement-box {
+            background: #f0eef7;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin: 10px 0;
+            font-size: 14px;
+            border-left: 4px solid #764ba2;
+        }
+
+        .context-preview {
+            font-size: 13px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        /* Чеклист */
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .checkbox.checked {
+            background: #764ba2;
+            border-color: #764ba2;
+            position: relative;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+        }
+
+        /* Нижняя панель */
+        .bottom-bar {
+            background: white;
+            border-top: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            width: 200px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Загрузчик */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #764ba2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 1200px) {
+            .grid-layout {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .left-panel, .right-panel {
+                display: none;
+            }
+            .mobile-menu {
+                display: block;
+            }
+        }
+
+        .mobile-menu {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Верхняя панель как в референсе -->
+    <div class="top-bar">
+        <div class="logo-area">
+            <div class="logo-placeholder">ВТ</div>
+            <div class="logo-text">
+                <input type="text" placeholder="Логотип клиента -" value="РАН Валидатор">
+            </div>
+        </div>
+        
+        <div class="badge">
+            <span>⚡</span> или укажите ссылку на лого
+        </div>
+        
+        <div class="badge">
+            <span>📄</span> PDF уже сохраняется!
+        </div>
+        
+        <div style="flex: 1"></div>
+        
+        <div class="badge" style="background: #764ba2; color: white;">
+            <span>🔍</span> Версия 1.0
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container">
+        <!-- Мобильное меню (скрыто на десктопе) -->
+        <div class="mobile-menu">
+            <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                <span class="badge">Общая+лого</span>
+                <span class="badge">Менеджер+стоимость</span>
+                <span class="badge">Инструкция</span>
+                <span class="badge">Музыка</span>
+                <span class="badge">Концепции</span>
+            </div>
+        </div>
+
+        <!-- Сетка 3 колонки как в референсе -->
+        <div class="grid-layout">
+            <!-- Левая панель с меню -->
+            <div class="left-panel">
+                <div class="menu-item active">
+                    <span class="menu-icon">📝</span>
+                    Общая+лого
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">👤</span>
+                    Менеджер+стоимость
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">📋</span>
+                    Инструкция по подключению
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🎵</span>
+                    Музыка
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🎙️</span>
+                    Креативные аудиоролики
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">💡</span>
+                    Концепции
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">📋</span>
+                    Тематические плейлисты
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="menu-item">
+                    <span class="menu-icon">⚙️</span>
+                    Сервис
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">📱</span>
+                    Мобильное приложение
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">▶️</span>
+                    Включай
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">📱</span>
+                    Девайсы
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">➕</span>
+                    Дополнительно
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="menu-item">
+                    <span class="menu-icon">💼</span>
+                    Бизнес-профиль
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🤝</span>
+                    Партнерская программа
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">💰</span>
+                    За деньги
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">⭐</span>
+                    Премиум тариф
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🎪</span>
+                    Мероприятия
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🎤</span>
+                    Артисты на мероприятие
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🌐</span>
+                    Музыка для веба
+                </div>
+                <div class="menu-item">
+                    <span class="menu-icon">🎥</span>
+                    Видео КП
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="menu-item" style="color: #764ba2; font-weight: 600;">
+                    <span class="menu-icon">🎯</span>
+                    Итоговое предложение
+                </div>
+            </div>
+
+            <!-- Центральная панель - редактор -->
+            <div class="editor-panel">
+                <div class="editor-header">
+                    <div class="editor-title">
+                        <span>📄</span>
+                        Валидатор текста по словарю РАН
+                    </div>
+                    <div class="editor-tabs">
+                        <button class="tab-btn active">Редактор</button>
+                        <button class="tab-btn">Словарь</button>
+                        <button class="tab-btn">Настройки</button>
+                    </div>
+                </div>
+
+                <div class="text-input-area">
+                    <textarea id="inputText" placeholder="Вставьте текст для проверки на соответствие словарю иностранных слов РАН...">Привет! Сегодня я купил новый блютуз-наушники для шопинга. Они очень классные! Также заказал бьюти-набор и кэжуал одежду. В офисе у нас новый стартап по разработке диджитал продуктов. На тренинге говорили про мерчандайзинг и промо-акции. Фрилансеры часто работают с разными гаджетами. Дедлайн по проекту - пятница.</textarea>
+                </div>
+
+                <div class="toolbar">
+                    <button class="btn btn-primary" onclick="checkText()">
+                        <span>🔍</span>
+                        Проверить текст
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearText()">
+                        <span>🗑️</span>
+                        Очистить
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadExample()">
+                        <span>📝</span>
+                        Загрузить пример
+                    </button>
+                </div>
+
+                <!-- Статистика -->
+                <div class="stats-grid" id="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Всего слов</div>
+                        <div class="stat-value" id="totalWords">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Уникальных</div>
+                        <div class="stat-value" id="uniqueWords">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Проблемных</div>
+                        <div class="stat-value" id="dangerousWords" style="color: #ff4757;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Готовность</div>
+                        <div class="stat-value" id="readiness">0%</div>
+                    </div>
+                </div>
+
+                <!-- Результаты проверки -->
+                <div id="results"></div>
+
+                <!-- Загрузчик -->
+                <div class="loader" id="loader">
+                    <div class="spinner"></div>
+                    <p>Анализ текста...</p>
+                </div>
+            </div>
+
+            <!-- Правая панель -->
+            <div class="right-panel">
+                <div class="section-title">
+                    <span>📋</span>
+                    Чек-лист проверки
+                    <span class="badge" id="checklistCount">0/12</span>
+                </div>
+                
+                <div id="checklist">
+                    <div class="checklist-item">
+                        <div class="checkbox checked"></div>
+                        <span>Общая информация</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox checked"></div>
+                        <span>Менеджер+стоимость</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Инструкция по подключению</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Музыка</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Креативные аудиоролики</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Концепции</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Тематические плейлисты</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Сервис</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Мобильное приложение</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Включай</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Девайсы</span>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checkbox"></div>
+                        <span>Дополнительно</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px;">
+                    <div class="section-title">
+                        <span>📊</span>
+                        Прогресс
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 25%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #666;">
+                        <span>Бизнес-профиль</span>
+                        <span>Партнерская программа</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px; padding: 16px; background: #f8f9fa; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: #764ba2; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">🔍</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px;">Словарь РАН</div>
+                            <div style="font-size: 12px; color: #666;">Редакция 2026</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; font-size: 12px; color: #666;">
+                        ⚡ 20 000+ слов в белом списке
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижняя панель -->
+    <div class="bottom-bar">
+        <div class="badge">
+            <span>🔒</span> Удачной сделки!
+        </div>
+        
+        <div style="display: flex; gap: 16px;">
+            <span class="badge">Премиум тариф</span>
+            <span class="badge">Мероприятия</span>
+            <span class="badge">Артисты на мероприятие</span>
+        </div>
+        
+        <div class="badge" style="background: #ff4757; color: white;">
+            ⚠️ Данная услуга пока недоступна в вашей стране
+        </div>
+    </div>
+
+    <!-- Уведомления -->
+    <div id="notification" style="display: none;"></div>
+
+    <script>
+        // Белый список (демо-версия)
+        const whiteList = new Set([
+            'брускетта', 'вок', 'модал', 'пачос', 'палаццо', 'траволатор', 
+            'тортилья', 'фриланс', 'автомобиль', 'телефон', 'компьютер', 
+            'интернет', 'офис', 'менеджмент', 'маркетинг', 'бизнес', 
+            'стартап', 'инновация', 'технология', 'информация', 'коммуникация',
+            'спорт', 'футбол', 'баскетбол', 'теннис', 'хоккей', 'тренинг',
+            'коучинг', 'лизинг', 'факторинг', 'аутсорсинг', 'консалтинг',
+            'пицца', 'паста', 'латте', 'капучино', 'суши', 'ролл',
+            'смартфон', 'планшет', 'ноутбук', 'принтер', 'сканер',
+            'дизайн', 'архитектура', 'музыка', 'кино', 'театр'
+        ]);
+
+        // Словарь замен
+        const replacements = {
+            'блютуз': 'беспроводная связь',
+            'bluetooth': 'беспроводная связь',
+            'шопинг': 'покупки',
+            'shopping': 'покупки',
+            'бьюти': 'красота',
+            'beauty': 'красота',
+            'кэжуал': 'повседневный',
+            'casual': 'повседневный',
+            'digital': 'цифровой',
+            'диджитал': 'цифровой',
+            'стартап': 'новый проект',
+            'startup': 'новый проект',
+            'коуч': 'наставник',
+            'coach': 'наставник',
+            'тренинг': 'обучение',
+            'training': 'обучение',
+            'мерчандайзинг': 'оформление товаров',
+            'мерч': 'сувенирная продукция',
+            'promo': 'рекламный',
+            'промо': 'рекламный',
+            'фриланс': 'удаленная работа',
+            'freelance': 'удаленная работа',
+            'гаджет': 'устройство',
+            'gadget': 'устройство',
+            'дедлайн': 'срок сдачи',
+            'deadline': 'срок сдачи',
+            'консалтинг': 'консультирование',
+            'consulting': 'консультирование',
+            'лизинг': 'аренда',
+            'leasing': 'аренда',
+            'аутсорсинг': 'привлечение сторонних специалистов',
+            'seo': 'поисковая оптимизация',
+            'сё': 'поисковая оптимизация',
+            'smm': 'маркетинг в соцсетях',
+            'смм': 'маркетинг в соцсетях'
+        };
+
+        // Функция показа уведомления
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <span style="font-size: 20px;">${type === 'success' ? '✅' : '⚠️'}</span>
+                <span>${message}</span>
+            `;
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Функция нормализации слова
+        function normalizeWord(word) {
+            return word.toLowerCase().replace(/[^\wа-яё]/gi, '');
+        }
+
+        // Функция проверки текста
+        function checkText() {
+            const text = document.getElementById('inputText').value.trim();
+            
+            if (!text) {
+                showNotification('Введите текст для проверки', 'error');
+                return;
+            }
+
+            // Показываем загрузчик
+            document.getElementById('loader').classList.add('active');
+
+            // Имитация задержки анализа
+            setTimeout(() => {
+                // Разбиваем на слова
+                const words = text.toLowerCase().match(/[а-яёa-z]+(?:-[а-яёa-z]+)?/gi) || [];
+                const uniqueWords = new Set(words.map(normalizeWord));
+                
+                // Находим проблемные слова
+                const problems = [];
+                words.forEach(word => {
+                    const normalized = normalizeWord(word);
+                    if (!whiteList.has(normalized) && !whiteList.has(word) && word.length > 2) {
+                        if (!problems.some(p => p.word === word)) {
+                            problems.push({
+                                word: word,
+                                normalized: normalized,
+                                replacement: replacements[normalized] || replacements[word] || '⚠️ Требуется ручная проверка',
+                                context: text.split(/[.!?]+/).find(s => s.toLowerCase().includes(word))?.trim() || ''
+                            });
+                        }
+                    }
+                });
+
+                // Обновляем статистику
+                document.getElementById('totalWords').textContent = words.length;
+                document.getElementById('uniqueWords').textContent = uniqueWords.size;
+                document.getElementById('dangerousWords').textContent = problems.length;
+                
+                const readiness = Math.max(0, 100 - (problems.length * 10));
+                document.getElementById('readiness').textContent = readiness + '%';
+                document.getElementById('progressFill').style.width = readiness + '%';
+
+                // Отображаем результаты
+                displayResults(problems);
+
+                // Обновляем чеклист
+                updateChecklist(problems.length);
+
+                // Скрываем загрузчик
+                document.getElementById('loader').classList.remove('active');
+                
+                if (problems.length === 0) {
+                    showNotification('Текст соответствует словарю РАН!', 'success');
+                } else {
+                    showNotification(`Найдено ${problems.length} проблемных слов`, 'error');
+                }
+            }, 1000);
+        }
+
+        // Функция отображения результатов
+        function displayResults(problems) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (problems.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div style="background: #d4edda; color: #155724; padding: 20px; border-radius: 12px; text-align: center;">
+                        <span style="font-size: 40px; display: block; margin-bottom: 10px;">✅</span>
+                        <h3 style="margin-bottom: 10px;">Текст соответствует нормам!</h3>
+                        <p style="color: #666;">Все слова присутствуют в словаре иностранных слов РАН</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<h3 style="margin-bottom: 20px;">🔍 Найденные проблемы:</h3>';
+            
+            problems.forEach((problem, index) => {
+                const riskLevel = problem.replacement.includes('⚠️') ? 'high' : 'medium';
+                
+                html += `
+                    <div class="result-card">
+                        <div class="result-word">
+                            <span>«${problem.word}»</span>
+                            <span class="risk-badge risk-${riskLevel}">
+                                ${riskLevel === 'high' ? 'Высокий риск' : 'Средний риск'}
+                            </span>
+                        </div>
+                        
+                        <div class="replacement-box">
+                            <strong>Рекомендуемая замена:</strong> ${problem.replacement}
+                        </div>
+                        
+                        ${problem.context ? `
+                            <div class="context-preview">
+                                <strong>Контекст:</strong> "...${problem.context}..."
+                            </div>
+                        ` : ''}
+                        
+                        <div style="font-size: 12px; color: #999; margin-top: 8px;">
+                            Нормальная форма: ${problem.normalized}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Добавляем рекомендации
+            html += `
+                <div style="margin-top: 24px; background: #f8f9fa; border-radius: 12px; padding: 16px;">
+                    <h4 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span>
+                        Рекомендации по исправлению
+                    </h4>
+                    <ul style="padding-left: 20px; color: #666;">
+                        <li>Замените выделенные слова на предложенные варианты</li>
+                        <li>Проверьте товарные знаки (они могут быть исключением)</li>
+                        <li>Используйте русские аналоги для слов без автоматической замены</li>
+                    </ul>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Функция обновления чеклиста
+        function updateChecklist(problemCount) {
+            const checkboxes = document.querySelectorAll('.checkbox');
+            const total = checkboxes.length;
+            const completed = Math.max(0, total - problemCount);
+            
+            checkboxes.forEach((box, index) => {
+                if (index < completed) {
+                    box.classList.add('checked');
+                } else {
+                    box.classList.remove('checked');
+                }
+            });
+            
+            document.getElementById('checklistCount').textContent = `${completed}/${total}`;
+        }
+
+        // Функция очистки
+        function clearText() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('totalWords').textContent = '0';
+            document.getElementById('uniqueWords').textContent = '0';
+            document.getElementById('dangerousWords').textContent = '0';
+            document.getElementById('readiness').textContent = '0%';
+            document.getElementById('progressFill').style.width = '0%';
+            
+            // Сбрасываем чеклист
+            document.querySelectorAll('.checkbox').forEach(box => box.classList.remove('checked'));
+            document.getElementById('checklistCount').textContent = '0/12';
+            
+            showNotification('Текст очищен', 'success');
+        }
+
+        // Функция загрузки примера
+        function loadExample() {
+            const example = `Привет! Сегодня я купил новый блютуз-наушники для шопинга. 
+Они очень классные! Также заказал бьюти-набор и кэжуал одежду. 
+В офисе у нас новый стартап по разработке диджитал продуктов. 
+На тренинге говорили про мерчандайзинг и промо-акции. 
+Фрилансеры часто работают с разными гаджетами. 
+Дедлайн по проекту - пятница.`;
+            
+            document.getElementById('inputText').value = example;
+            showNotification('Пример загружен', 'success');
+            
+            // Автоматически запускаем проверку
+            setTimeout(checkText, 500);
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            // Устанавливаем обработчики на чекбоксы
+            document.querySelectorAll('.checkbox').forEach((box, index) => {
+                box.addEventListener('click', function() {
+                    this.classList.toggle('checked');
+                    const checked = document.querySelectorAll('.checkbox.checked').length;
+                    const total = document.querySelectorAll('.checkbox').length;
+                    document.getElementById('checklistCount').textContent = `${checked}/${total}`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
